@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="./bootstrap.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-firestore.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-analytics.js"></script>
+        <title>Document</title>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Cloud Firestore</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor03"
+                    aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+        
+                <div class="collapse navbar-collapse" id="navbarColor03">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#">Home
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="container">
+            <div class="form-group">
+                <div class="form-group">
+                    <label for="Field" class="form-label mt-4">Field</label>
+                    <select class="form-select" id="Field">
+                        <option>Hours</option>
+                        <option>FinalMark</option>
+                    </select>
+        
+                    <div class="form-group">
+                        <label for="Operator" class="form-label mt-4">Operator</label>
+                        <select class="form-select" id="Operator">
+                            <option>==</option>
+                            <option>></option>
+                            <option>
+                                <</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="Value" class="form-label mt-4">Value</label>
+                        <input type="text" class="form-control" id="Value">
+                    </div>
+                    <br>
+                    <button type="button" class="btn btn-light" style="width:100%" onclick="Search()">Search</button>
+        
+                    <hr>
+                    <table class="table table-hover" id="Courses">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">FinalMark</th>
+                                <th scope="col">Hours</th>
+                                <th scope="col">Available</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script>
+        var firebaseConfig = {
+                apiKey: "AIzaSyA7NMLd6FBkn3Vr7ydEhAnSUZ0ZEbQOwZE",
+                authDomain: "courses-afe5b.firebaseapp.com",
+                projectId: "courses-afe5b",
+                storageBucket: "courses-afe5b.appspot.com",
+                messagingSenderId: "107185085665",
+                appId: "1:107185085665:web:48f08692499a295b04aba0"
+            };
+            // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                var db = firebase.firestore();
+
+                db.collection("Courses").onSnapshot((result) => {
+                    DisplayCourses(result);
+                })
+
+                function Search() {
+                    var field = $("#Field").val();
+                    var operator = $("#Operator").val();
+                    var value = parseInt($("#Value").val());
+
+                    db.collection("Courses")
+                        .where(field, operator, value)
+                        .get()
+                        .then((result) => { DisplayCourses(result) })
+                        .catch((error) => { console.log(error) })
+                }
+
+                function DisplayCourses(data) {
+                    $("#Courses>tbody").empty();
+                    data.forEach((doc) => {
+                        var info = doc.data();
+                        var row = `<tr>
+                        <td>${doc.id}</td>
+                        <td>${info.Name}</td>
+                        <td>${info.FinalMark}</td>
+                        <td>${info.Hours}</td>
+                        <td>${info.Available}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary"
+                             onclick="GetOneCourse('${doc.id}')">Update</button>
+                            <button type="button" class="btn btn-secondary"
+                             onclick="DeleteCourse('${doc.id}')">Delete</button>
+                        </td>
+                    </tr>`;
+                        $("#Courses>tbody").append(row);
+                    })
+                }
+        
+    </script>
+</html>

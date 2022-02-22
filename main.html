@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./bootstrap.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.5/firebase-analytics.js"></script>
+    <title>Document</title>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">Cloud Firestore</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarColor03"
+          aria-controls="navbarColor03"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarColor03">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="#">Home </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="form-group">
+        <label for="ID" class="form-label mt-4">ID</label>
+        <input type="text" class="form-control" id="ID" readonly />
+      </div>
+      <div class="form-group">
+        <label for="Name" class="form-label mt-4">Name</label>
+        <input type="text" class="form-control" id="Name" />
+      </div>
+      <div class="form-group">
+        <label for="FinalMark" class="form-label mt-4">Final Marks</label>
+        <input type="number" class="form-control" id="FinalMark" />
+      </div>
+      <div class="form-group">
+        <label for="Hours" class="form-label mt-4">Hours</label>
+        <input type="number" class="form-control" id="Hours" />
+      </div>
+      <br />
+      <div class="form-check form-switch">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="Available"
+          checked=""
+        />
+        <label class="form-check-label" for="Available">Available</label>
+      </div>
+      <br />
+      <button
+        type="button"
+        class="btn btn-light"
+        style="width: 100%"
+        onclick="AddCourse()"
+      >
+        Save
+      </button>
+
+      <hr />
+      <table class="table table-hover" id="Courses">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Final Marks</th>
+            <th scope="col">Hours</th>
+            <th scope="col">Available</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </body>
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyA7NMLd6FBkn3Vr7ydEhAnSUZ0ZEbQOwZE",
+      authDomain: "courses-afe5b.firebaseapp.com",
+      projectId: "courses-afe5b",
+      storageBucket: "courses-afe5b.appspot.com",
+      messagingSenderId: "107185085665",
+      appId: "1:107185085665:web:48f08692499a295b04aba0",
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+    var db = firebase.firestore();
+
+    db.collection("Courses").onSnapshot((result) => {
+      DisplayCourses(result);
+    });
+
+    function AddCourse() {
+      var ID = $("#ID").val();
+      var Name = $("#Name").val();
+      var FinalMark = parseInt($("#FinalMark").val());
+      var Hours = parseInt($("#Hours").val());
+      var Available = $("#Available").is(":checked");
+
+      var NewCourse = {
+        Name: Name,
+        FinalMark: FinalMark,
+        Hours: Hours,
+        Available: Available,
+      };
+
+      if (ID == "") {
+        //add new
+        db.collection("Courses")
+          .add(NewCourse)
+          .then(function (response) {
+            console.log(response.id);
+            Clear();
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+      } else {
+        db.collection("Courses")
+          .doc(ID)
+          .update(NewCourse)
+          .then((result) => {
+            console.log("Done");
+            Clear();
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+    }
+
+    function Clear() {
+      $("#ID").val("");
+      $("#Name").val("");
+      $("#FinalMark").val("");
+      $("#Hours").val("");
+      $("#Available").prop("checked", true);
+    }
+
+    function DisplayCourses(data) {
+      $("#Courses>tbody").empty();
+      data.forEach((doc) => {
+        var info = doc.data();
+        var row = `<tr>
+                        <td>${doc.id}</td>
+                        <td>${info.Name}</td>
+                        <td>${info.FinalMark}</td>
+                        <td>${info.Hours}</td>
+                        <td>${info.Available}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary"
+                             onclick="GetOneCourse('${doc.id}')">Update</button>
+                            <button type="button" class="btn btn-secondary"
+                             onclick="DeleteCourse('${doc.id}')">Delete</button>
+                        </td>
+                    </tr>`;
+        $("#Courses>tbody").append(row);
+      });
+    }
+
+    function GetOneCourse(CourseID) {
+      db.collection("Courses")
+        .doc(CourseID)
+        .get()
+        .then((result) => {
+          var info = result.data();
+          $("#ID").val(CourseID);
+          $("#Name").val(info.Name);
+          $("#FinalMark").val(info.FinalMark);
+          $("#Hours").val(info.Hours);
+          info.Available == true
+            ? $("#Available").prop("checked", true)
+            : $("#Available").prop("checked", false);
+        });
+    }
+
+    function DeleteCourse(CourseID) {
+      var sure = confirm("Are You Sure?");
+      if (sure) {
+        db.collection("Courses")
+          .doc(CourseID)
+          .delete()
+          .then(() => {
+            console.log("Deleted");
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+    }
+  </script>
+</html>
